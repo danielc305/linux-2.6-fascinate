@@ -279,7 +279,7 @@ void tick_nohz_stop_sched_tick(int inidle)
 	if (!inidle && !ts->inidle)
 		goto end;
 
-	now = tick_nohz_start_idle(ts);
+	now = tick_nohz_start_idle(cpu,ts);
 
 	/*
 	 * If this cpu is offline and it is the one which updates
@@ -296,13 +296,6 @@ void tick_nohz_stop_sched_tick(int inidle)
 	if (unlikely(ts->nohz_mode == NOHZ_MODE_INACTIVE))
 		goto end;
 
-<<<<<<< HEAD:kernel/time/tick-sched.c
-	if (!inidle && !ts->inidle)
-		goto end;
-
-	now = tick_nohz_start_idle(cpu,ts);
-=======
->>>>>>> f2e21c9... NOHZ: Properly feed cpufreq ondemand governor:kernel/time/tick-sched.c
 	ts->inidle = 1;
 
 	if (need_resched())
