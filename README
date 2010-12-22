@@ -5,8 +5,6 @@ By default, they are setup to build kernels for the VZW Fascinate, USCC Mesmeriz
 will both download the necessary code for the initramfs and toolchain to build compatible kernels. If you would like
 to build for only one device, simply edit the top of build_stuff.sh's "MODELS=" line to suit your needs.
 
-To build voodoo lagfix kernels, run build_voodoo.sh. If this is the first time you are building, it will take some
-time for the voodoo code to be compiled. Be patient. If you get a popup screen from make menuconfig, simply select
-"Exit". When finished, it will run build_kernel.sh automatically.
+To build voodoo lagfix kernels, run build_voodoo.sh. When the code is finished downloading, it will run build_kernel.sh automatically.
 
 To build non-voodoo lagfix kernels, run build_kernel.sh directly.

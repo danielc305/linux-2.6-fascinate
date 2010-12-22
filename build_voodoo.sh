@@ -13,24 +13,20 @@ do
 done
 REPO="cwm_voodoo" && fetch_repo
 
-# check for and/or build voodoo lagfix stages
+# check for and/or download voodoo lagfix stages
 if [ ! -d lagfix ] || [ "$1" == "f" ]; then
-	echo "***** Fetching and building lagfix code folder***** "
+	echo "***** Fetching lagfix code *****"
 	rm -rf lagfix
 	CMD="git clone git://github.com/jt1134/lagfix.git" && doit
 fi
 if [ ! -f lagfix/stages_builder/stages/stage1.tar ] || \
    [ ! -f lagfix/stages_builder/stages/stage2.tar.lzma ] || \
    [ ! -f lagfix/stages_builder/stages/stage3-sound.tar.lzma ]; then
-	echo "***** Building Voodoo stages *****"
+	# never build stages again!
+	echo "***** Fetching Voodoo stages *****"
 	cd lagfix/stages_builder
-	rm -rf stages/* buildroot* >/dev/null 2>&1
-	CMD="./scripts/download_and_extract_buildroot.sh" && doit
-	./scripts/restore_configs.sh 2>/dev/null
-	# workaround due to main mpfr site being down
-	CMD="sed -i \"s/www.mpfr.org/ftp.download-by.net\/gnu\/gnu\/mpfr/\" \
-		buildroot-2010.08/package/mpfr/mpfr.mk" && doit
-	CMD="./scripts/build_everything.sh" && doit
+	rm -f stages/* >/dev/null 2>&1
+	CMD="./scripts/download_precompiled_stages.sh" && doit
 	cd ../../
 fi
 
