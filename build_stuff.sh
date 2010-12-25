@@ -1,8 +1,6 @@
 #!/bin/bash
 
 MODELS="fascinate mesmerize showcase"
-DATE=$(date +%m%d)
-rm "$DATE"_test_*.zip >/dev/null 2>&1
 WORK=`pwd`
 CONTINUE="n"
 
@@ -25,7 +23,7 @@ fetch_repo()
 {
 	echo "***** Fetching code for \"$REPO\" *****"
 	if [ ! -d "$REPO"/.git ]; then
-		rm -rf "$REPO" >/dev/null 2>&1
+		rm -rf "$REPO"
 		CMD="git clone git://github.com/jt1134/\"$REPO\"" && doit
 	else
 		cd "$REPO"
@@ -35,7 +33,7 @@ fetch_repo()
 		if ! doit; then
 			echo "***** Problem merging \"$REPO\". Redownloading... *****"
 			rm -rf "$REPO"
-			# loop once :P
+			# loop once P:
 			CONTINUE="n" && fetch_repo "$REPO"
 		fi
 		cd ..

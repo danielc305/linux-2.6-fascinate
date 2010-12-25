@@ -25,19 +25,19 @@ if [ ! -f lagfix/stages_builder/stages/stage1.tar ] || \
 	# never build stages again!
 	echo "***** Fetching Voodoo stages *****"
 	cd lagfix/stages_builder
-	rm -f stages/* >/dev/null 2>&1
+	rm -f stages/stage*
 	CMD="./scripts/download_precompiled_stages.sh" && doit
 	cd ../../
 fi
 
 # make voodoo ramdisk
 echo "***** Creating voodoo initramfs *****"
-rm -rf voodoo5_* >/dev/null 2>&1
+rm -rf *_voodoo5
 for MODEL in $MODELS
 do
 	CMD="./lagfix/voodoo_injector/generate_voodoo_initramfs.sh \
 		-s \"$MODEL\"_initramfs \
-		-d voodoo5_\"$MODEL\" \
+		-d \"$MODEL\"_voodoo5 \
 		-x lagfix/extensions \
 		-p lagfix/voodoo_initramfs_parts \
 		-t lagfix/stages_builder/stages \
@@ -48,5 +48,5 @@ done
 # execute the kernel build script
 echo -e "***** Running kernel build script *****\n"
 cd linux-2.6-fascinate
-./build_kernel.sh N
+./build_kernel.sh V
 

@@ -2,12 +2,13 @@
 
 # setup
 source build_stuff.sh
+DATE=$(date +%m%d)
 
 # execution!
 cd ..
 
 # check for voodoo/non-voodoo - backup/restore .git if needed
-if [ "$1" != "N" ]; then
+if [ "$1" != "V" ]; then
 	CONFIG="novoodoo"
 	RESTORE_GIT="y"
 	for MODEL in $MODELS
@@ -20,7 +21,7 @@ if [ "$1" != "N" ]; then
 		cd ..
 	done
 else
-	CONFIG="voodoo"
+	CONFIG="voodoo5"
 fi
 
 # fetch the toolchain if needed
@@ -39,19 +40,20 @@ fi
 cd linux-2.6-fascinate
 for MODEL in $MODELS
 do
-	TARGET="$CONFIG"_"$MODEL"
+	TARGET="$MODEL"_"$CONFIG"
 	echo "***** Building : $TARGET *****"
 	make clean mrproper >/dev/null 2>&1
-	rm update/*.zip update/kernel_update/zImage >/dev/null 2>&1
+	rm -f update/*.zip update/kernel_update/zImage "$DATE"_"$TARGET".zip
 
-	CMD="make ARCH=arm jt1134_\"$TARGET\"_defconfig" && doit
+	sed -i "s/\/.*_/\/"$MODEL"_/" arch/arm/configs/jt1134_"$CONFIG"_defconfig
+	CMD="make ARCH=arm jt1134_\"$CONFIG\"_defconfig" && doit
 	CMD="make -j8 CROSS_COMPILE=../arm-2009q3/bin/arm-none-linux-gnueabi- \
 		ARCH=arm HOSTCFLAGS=\"-g -O3\"" && doit
 
 	cp arch/arm/boot/zImage update/kernel_update/zImage
 	cd update
 	zip -r -q kernel_update.zip .
-	mv kernel_update.zip ../"$DATE"_test_"$TARGET".zip
+	mv kernel_update.zip ../"$DATE"_"$TARGET".zip
 	cd ..
 	echo -e "***** Successfully compiled: $TARGET *****\n"
 
@@ -59,7 +61,9 @@ do
 		cd ../"$MODEL"_initramfs
 		unzip -q "$WORK"/"$MODEL"_initramfs_git.zip
 		cd "$WORK"
-		rm -f "$MODEL"_initramfs_git.zip >/dev/null 2>&1
+		rm -f "$MODEL"_initramfs_git.zip
 	fi
 done
+
+if [ "$1" == "A" ]; then ./build_voodoo.sh; fi
 
