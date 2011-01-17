@@ -423,7 +423,7 @@ static int is_over_abs_time(void)
 }
 
 #ifdef __CHECK_CHG_CURRENT__
-//static int detected = 0;	// hanapark_Atlas (wait 20 sec to notify full charging)
+static int detected = 0;	// hanapark_Atlas (wait 20 sec to notify full charging)
 static void check_chg_current(struct power_supply *bat_ps)
 {
 	static int cnt = 0;
@@ -437,9 +437,7 @@ static void check_chg_current(struct power_supply *bat_ps)
 	if (time_check < (5*HZ))
 		return ;	// hanapark_Atlas (DF04; prevent code; wait 5 sec to prevent abnormal full charging popup)
 
-//	if ((s3c_bat_info.bat_info.batt_current <= CURRENT_OF_FULL_CHG) || detected) {	// hanapark_Atlas (wait 20 sec to notify full charging)
-if ( (s3c_bat_info.bat_info.batt_vol >= FULL_CHARGE_COND_VOLTAGE) &&		// DH11 (full charge condition added)
-	(s3c_bat_info.bat_info.batt_current <= CURRENT_OF_FULL_CHG) ) {
+	if ((s3c_bat_info.bat_info.batt_current <= CURRENT_OF_FULL_CHG) || detected) {	// hanapark_Atlas (wait 20 sec to notify full charging)
 #ifdef __TEST_MODE_INTERFACE__
 		if (s3c_bat_info.bat_info.batt_test_mode == 1)	// test mode (interval 1 sec)
 			cnt++;
@@ -447,7 +445,7 @@ if ( (s3c_bat_info.bat_info.batt_vol >= FULL_CHARGE_COND_VOLTAGE) &&		// DH11 (f
 #endif
 			cnt += 2;
 
-//		detected = 1;	// hanapark_Atlas (wait 20 sec to notify full charging)
+		detected = 1;	// hanapark_Atlas (wait 20 sec to notify full charging)
 
 		if (cnt >= CHG_CURRENT_COUNT)
 		{
@@ -456,11 +454,11 @@ if ( (s3c_bat_info.bat_info.batt_vol >= FULL_CHARGE_COND_VOLTAGE) &&		// DH11 (f
 			s3c_bat_info.bat_info.batt_is_full = 1;
 			force_update = 1;
 			cnt = 0;
-//			detected = 0;	// hanapark_Atlas (wait 20 sec to notify full charging)
+			detected = 0;	// hanapark_Atlas (wait 20 sec to notify full charging)
 		}
 	} else {
 		cnt = 0;
-//		detected = 0;	// hanapark_Atlas (wait 20 sec to notify full charging)
+		detected = 0;	// hanapark_Atlas (wait 20 sec to notify full charging)
 	}
 }
 #endif /* __CHECK_CHG_CURRENT__ */
@@ -472,8 +470,7 @@ static void check_recharging_bat(int bat_vol)
 
 	if (s3c_bat_info.bat_info.batt_is_full && 
 		!s3c_bat_info.bat_info.charging_enabled &&
-		/*batt_recharging != -1 &&*/ (bat_vol < RECHARGE_COND_VOLTAGE || /*batt_recharging*/
-		bat_vol < RECHARGE_COND_VOLTAGE_BACKUP)) {	// hanapark (recharge voltage)
+		/*batt_recharging != -1 &&*/ bat_vol < RECHARGE_COND_VOLTAGE/*batt_recharging*/) {	// hanapark (recharge voltage)
 #ifdef __TEST_MODE_INTERFACE__
 		if (s3c_bat_info.bat_info.batt_test_mode == 1)	// test mode (interval 1 sec)
 			cnt++;
@@ -711,14 +708,10 @@ static int s3c_get_bat_temp(struct power_supply *bat_ps)
 		s3c_temp_control(health_new);	// hanapark_DF21
 	}
 
-#if 1 //batt bar slow
 __map_temperature__:	
 	array_size = ARRAY_SIZE(temper_table);
-//	printk("__map_temperature__ %d \n", array_size);
-
 	for (i = 0; i < (array_size - 1); i++) {
 		if (i == 0) {
-//			printk("__map_temperature__ i = %d \n", i);
 			if (temp_adc <= temper_table[0][0]) {
 				temp = temper_table[0][1];
 				break;
@@ -731,11 +724,10 @@ __map_temperature__:
 		if (temper_table[i][0] < temp_adc &&
 				temper_table[i+1][0] >= temp_adc) {
 			temp = temper_table[i+1][1];
-//			printk("__map_temperature__ i = %d \n", i);
 		}
 	}
-//	dev_dbg(dev, "%s: temp = %d, adc = %d\n",__func__, temp, temp_adc);
-#endif
+	dev_dbg(dev, "%s: temp = %d, adc = %d\n",
+			__func__, temp, temp_adc);
 
 #ifdef __TEST_MODE_INTERFACE__
        	s3c_bat_info.bat_info.batt_temp_aver = temp;
@@ -1122,7 +1114,7 @@ static ssize_t s3c_bat_show_property(struct device *dev,
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 			s3c_bat_check_v_f());	// hanapark_DD15
 #else
-		// hanapark_DH13 (battery auth : 1 5 test)
+	// hanapark_DH13 (battery auth : 1 5 test)
 		if (s3c_get_bat_health() == POWER_SUPPLY_HEALTH_UNSPEC_FAILURE)
 		{
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", 0);
@@ -1132,7 +1124,6 @@ static ssize_t s3c_bat_show_property(struct device *dev,
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", 1);
 		}
 #endif
-
 		break;
 #endif
         default:
@@ -1425,7 +1416,7 @@ static void s3c_bat_status_update(struct power_supply *bat_ps)
 	}
 	s3c_bat_info.bat_info.batt_vol = s3c_get_bat_vol(bat_ps);
 
-	if ((s3c_bat_check_v_f() == 0) && (s3c_bat_info.bat_info.charging_source != CHARGER_BATTERY))
+	if (s3c_bat_check_v_f() == 0)
 		charging_stop_without_magic_number();	// hanapark_DF01
 
 	if (old_level != s3c_bat_info.bat_info.level 
@@ -1441,51 +1432,27 @@ static void s3c_bat_status_update(struct power_supply *bat_ps)
 	dev_dbg(dev, "%s --\n", __func__);
 }
 
-extern u8 FSA9480_Get_JIG_OnOff_Status(void);	// hanapark_DH16
-
 static unsigned int s3c_bat_check_v_f(void)
 {
 #ifdef __VZW_AUTH_CHECK__
 	int retval = 0;
-	static int jig_status = 0;	// hanapark_DH18
-
-	if (FSA9480_Get_JIG_OnOff_Status() == 1)	// hanapark_DH16
-	{
-	    jig_status = 1;
-		s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
-		return 1;
-	}
-	else if (jig_status == 1) // hanapark_DH18
-	{
-		jig_status = 0;
-		batt_auth_full_check = 0; // retry
-	}
 
 	if (batt_auth_full_check == 0)
 	{
 		retval = verizon_batt_auth_full_check();
 		batt_auth_full_check = 1; 	// hanapark (full check always -- called by s3c_set_chg_en)
-
-		if (!retval)
-		{
-			s3c_set_bat_health(POWER_SUPPLY_HEALTH_UNSPEC_FAILURE);
-			force_update = 1;
-			return 0;
-		}
-
 	}
 	else
 	{
 		retval = verizon_batt_auth_check();
-
-	     if (!retval)
-		 {
-			return 0;
-		 }
-
 	}
 
-
+	if (!retval)
+	{
+		s3c_set_bat_health(POWER_SUPPLY_HEALTH_UNSPEC_FAILURE);
+		force_update = 1;
+		return 0;
+	}
 
 	return 1;
 #else	/* __VZW_AUTH_CHECK__ */
@@ -1540,7 +1507,7 @@ static void s3c_cable_check_status(void)
 		status = CHARGER_BATTERY;
 		s3c_set_chg_en(0);
 		printk("%s: No charger!\n", __func__);
-//		detected = 0;	// hanapark_Atlas
+		detected = 0;	// hanapark_Atlas
 	}
 
 __end__:
