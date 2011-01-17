@@ -150,8 +150,6 @@ select_mic_route universal_wm8994_mic_paths[] = {wm8994_record_main_mic, wm8994_
 
 #ifdef FEATURE_SS_AUDIO_CAL
 extern u64 get_jiffies_64(void);
-extern void FSA9480_Enable_SPK(u8 enable);
-
 static int configure_clock(struct snd_soc_codec *codec);
 
 unsigned int tty_mode = TTY_MODE_OFF;
@@ -312,7 +310,7 @@ static int proc_write_ttymode(struct file *file, const char *buffer, unsigned lo
     return strnlen(buf, len);
 }
 
-/*   ÿ tty_mode   */
+/*   Ã¿ tty_mode   */
 static int init_tty_mode_procfs(void)
 {
     int ret = 0;
@@ -352,7 +350,7 @@ static int init_tty_mode_procfs(void)
     return ret;
 }
 
-/*  ÿ tty_mode   */
+/*  Ã¿ tty_mode   */
 static void cleanup_tty_mode_procfs(void)
 {
     remove_proc_entry("tty_mode", tty_procfs_dir);
@@ -434,7 +432,7 @@ static int proc_write_loopback_mode(struct file *file, const char *buffer, unsig
     return strnlen(buf, len);
 }
 
-/*   ÿ tty_mode   */
+/*   Ã¿ tty_mode   */
 static int init_loopback_mode_procfs(void)
 {
     int ret = 0;
@@ -463,7 +461,6 @@ static int init_loopback_mode_procfs(void)
     out:
     return ret;
 }
-
 #endif
 
 //------------------------------------------------
@@ -505,7 +502,7 @@ static int wm8994_set_mic_path(struct snd_kcontrol *kcontrol,
 
 	wm8994->codec_state |= CAPTURE_ACTIVE;
 	
-	if (ucontrol->value.integer.value[0] == 0 || get_headset_status() == SEC_HEADSET_3_POLE_DEVICE) // MAIN MIC
+	if (ucontrol->value.integer.value[0] == 0) // MAIN MIC
                 wm8994->rec_path = MAIN;
 	else if (ucontrol->value.integer.value[0] == 1) // SUB MIC
                 wm8994->rec_path = SUB;
@@ -580,12 +577,9 @@ static int wm8994_set_playback_path(struct snd_kcontrol *kcontrol, struct snd_ct
 
 		case EXTRA_DOCK_SPEAKER:
 		case TV_OUT:
-                   FSA9480_Enable_SPK(1);
+			DEBUG_LOG("routing to %s \n", mc->texts[path_num] );
 			wm8994->ringtone_active = OFF;
 			path_num -= 3;
-
-			DEBUG_LOG("routing to %s \n", mc->texts[path_num] );
-			
 			break;			
 
 		default:
@@ -965,11 +959,6 @@ static int wm8994_set_codec_status(struct snd_kcontrol *kcontrol,
 			DEBUG_LOG("Recognition Gain is activated!!");
 			wm8994->recognition_active = REC_ON;
 			break;
-             //HYH_20100730
-	      case CMD_RECOGNITION_VSUITE:
-	             DEBUG_LOG("VSuite Recognition Gain is activated!!");
-			wm8994->recognition_active = REC_VSUITE;
-	             break;
 
 		// To remove pop up noise for Call.
 		case CMD_CALL_FLAG_CLEAR:
@@ -1732,7 +1721,7 @@ static int wm8994_startup(struct snd_pcm_substream *substream, struct snd_soc_da
 		DEBUG_LOG("Turn on codec!! Power state =[%d]", wm8994->power_state);
 
 		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1, 0x3 << WM8994_VMID_SEL_SHIFT | WM8994_BIAS_ENA);
-		msleep(25);
+		msleep(10);
 
 		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1, WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
 		wm8994_write(codec,WM8994_OVERSAMPLING, 0x0000);
@@ -1747,8 +1736,6 @@ void wm8994_shutdown(struct snd_pcm_substream *substream, struct snd_soc_dai *co
 {
     struct snd_soc_codec *codec = codec_dai->codec;
     struct wm8994_priv *wm8994 = codec->private_data;
-    unsigned int headset_status;   //HYH_20100823
-
     
 	if(wm8994->testmode_config_flag)
     {
@@ -1757,7 +1744,7 @@ void wm8994_shutdown(struct snd_pcm_substream *substream, struct snd_soc_dai *co
 	}
         
 
-	DEBUG_LOG("Stream_state = [0x%X],  Codec State = [0x%X]  substream = [0x%X]", wm8994->stream_state, wm8994->codec_state, substream->stream);
+	DEBUG_LOG("Stream_state = [0x%X],  Codec State = [0x%X]", wm8994->stream_state, wm8994->codec_state);
 
 	if(substream->stream == SNDRV_PCM_STREAM_CAPTURE)
     {
@@ -1772,7 +1759,7 @@ void wm8994_shutdown(struct snd_pcm_substream *substream, struct snd_soc_dai *co
         saved_codec = NULL;
 #endif
     }
-     
+        
 #ifdef FEATURE_SS_AUDIO_CAL
     if(!snd_saved_kcontrol && !snd_saved_ctl_elem_value && (wm8994->rec_path == MIC_OFF) &&
        (wm8994->codec_state == DEACTIVE) && (wm8994->stream_state == PCM_STREAM_DEACTIVE))
@@ -1815,36 +1802,10 @@ void wm8994_shutdown(struct snd_pcm_substream *substream, struct snd_soc_dai *co
 	DEBUG_LOG("Preserve codec state = [0x%X], Stream State = [0x%X]", wm8994->codec_state, wm8994->stream_state);
 
 	if((substream->stream == SNDRV_PCM_STREAM_CAPTURE) && !(wm8994->codec_state & CALL_ACTIVE))
-      {
+    {
             wm8994_disable_rec_path(codec, wm8994->rec_path);
-	      wm8994->codec_state &= ~(CAPTURE_ACTIVE);
-            wm8994->rec_path = MIC_OFF;
-
-            //[[HYH_20100822
-            headset_status = get_headset_status();
-            if(!snd_saved_kcontrol && !snd_saved_ctl_elem_value && (wm8994->rec_path == MIC_OFF) &&
-           (wm8994->codec_state == DEACTIVE) && (wm8994->stream_state == PCM_STREAM_DEACTIVE) &&
-           (headset_status == SEC_HEADSET_3_POLE_DEVICE || headset_status == SEC_HEADSET_4_POLE_DEVICE)
-           ) 
-            {
-        		DEBUG_LOG("Turn off Codec!!");
-        		audio_ctrl_mic_bias_gpio(0);
-                audio_ctrl_mic1_bias_gpio(0);
-        		wm8994->power_state = CODEC_OFF;
-                wm8994->fmradio_path = FMR_OFF;
-        		wm8994->cur_path = OFF;
-        		wm8994->ringtone_active = OFF;
-                
-                if(!override_timer_on)
-                {
-        		    wm8994_write(codec, WM8994_SOFTWARE_RESET, 0x0000);
-                }
-        #if defined ATTACH_ADDITINAL_PCM_DRIVER
-        		vtCallActive = 0;
-        #endif
-        		return;
-            }
-            //]]HYH_20100822
+		wm8994->codec_state &= ~(CAPTURE_ACTIVE);
+        wm8994->rec_path = MIC_OFF;
 	}
 	else	// Playback
 	{
@@ -2024,7 +1985,7 @@ static int wm8994_init(struct snd_soc_device *socdev)
     wm8994_write(codec,WM8994_SOFTWARE_RESET, 0x0000);
 
     wm8994_write(codec, WM8994_POWER_MANAGEMENT_1, 0x3 << WM8994_VMID_SEL_SHIFT | WM8994_BIAS_ENA);
-    msleep(25);
+    msleep(10);
     wm8994_write(codec, WM8994_POWER_MANAGEMENT_1, WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
 
     wm8994->hw_version = wm8994_read(codec, 0x100);    // Read Wm8994 version.
@@ -2365,8 +2326,8 @@ static int wm8994_pcm_remove(struct platform_device *pdev)
 static int wm8994_suspend(struct platform_device *pdev,pm_message_t msg )
 {
 	struct snd_soc_device *socdev = platform_get_drvdata(pdev);
-        struct snd_soc_codec *codec = socdev->codec;
-        struct wm8994_priv *wm8994 = codec->private_data;
+    struct snd_soc_codec *codec = socdev->codec;
+    struct wm8994_priv *wm8994 = codec->private_data;
 
 	DEBUG_LOG("Codec State = [0x%X], Stream State = [0x%X]", wm8994->codec_state, wm8994->stream_state);
 	
