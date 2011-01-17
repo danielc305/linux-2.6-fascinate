@@ -50,7 +50,7 @@ enum mic_path		{ MAIN, SUB, BT_REC, MIC_OFF};
 enum fmradio_path { FMR_OFF, FMR_SPK, FMR_HP, FMR_SPK_MIX, FMR_HP_MIX, FMR_DUAL_MIX};
 enum fmradio_mix_path	{ FMR_MIX_OFF, FMR_MIX_HP, FMR_MIX_SPK, FMR_MIX_DUAL};
 enum power_state	{ CODEC_OFF, CODEC_ON };
-enum recognition	{REC_OFF, REC_ON, REC_VSUITE};  //HYH_20100730
+enum recognition	{REC_OFF, REC_ON};
 enum state{OFF, ON};
 
 #define DEACTIVE				0x00
@@ -71,7 +71,6 @@ enum state{OFF, ON};
 #define CMD_RECOGNITION_ACTIVE		5	// Distingush recognition gain. To use MIC gain for recognition.
 #define CMD_CALL_FLAG_CLEAR		6	// Call flag clear for shutdown - to reduce pop up noise.
 #define CMD_CALL_END			7	// Codec off in call mode - to reduce pop up noise.
-#define CMD_RECOGNITION_VSUITE			8	// To apply seperate gain to VSuite. //HYH_20100730
 
 #define TTY_MODE_OFF    0
 #define TTY_MODE_FULL   1
