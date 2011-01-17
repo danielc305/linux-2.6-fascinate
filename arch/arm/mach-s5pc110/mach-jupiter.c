@@ -3841,7 +3841,7 @@ void s3c_config_sleep_gpio(void)
 	//s3c_gpio_cfgpin(S5PC11X_GPH1(0), S3C_GPIO_INPUT);
 	s3c_gpio_cfgpin(S5PC11X_GPH1(0), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PC11X_GPH1(0), S3C_GPIO_PULL_DOWN);
-	//s3c_gpio_setpin(S5PC11X_GPH1(0), 0);
+	s3c_gpio_setpin(S5PC11X_GPH1(0), 0);
 
 	s3c_gpio_cfgpin(S5PC11X_GPH1(1), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PC11X_GPH1(1), S3C_GPIO_PULL_DOWN);
