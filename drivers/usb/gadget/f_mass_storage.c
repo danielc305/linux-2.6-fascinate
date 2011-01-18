@@ -1430,32 +1430,7 @@ static int do_inquiry_cdrom(struct fsg_dev *fsg, struct fsg_buffhd *bh)
 
 	memset(buf, 0, 8);	// Non-removable, direct-access device
 
-#ifdef FEATURE_DEVICE_AS_CDROM_DEVICE_FOR_DRIVER
-	buf[0] = TYPE_CDROM;
-#else
-	buf[0] = 5;
-#endif
-	buf[1] = 0x80;
-	buf[2] = 2;		// ANSI SCSI level 2
-	buf[3] = 2;		// SCSI-2 INQUIRY data format
-	buf[4] = 0x33;		// Additional length
-	buf[5] = 0;
-	buf[6] = 0;
-	buf[7] = 0x10;
 
-	//sprintf(buf + 8, "%-8s%-16s%-4s", vendor_id, product_id, release);
-	sprintf(buf + 8, "%-8s%-16s%-4s%-20s", vendor_id, product_id, release, vendor_str);
-
-#ifdef FEATURE_DEVICE_AS_CDROM_DEVICE_FOR_DRIVER
-    //XXXXX - open the cdrom iso file
-    printk(">>> CD-ROM open_backing_file called. Current LUN: %d.\n", fsg->curlun);
-#ifdef FEATURE_TOOL_LAUNCHER //********************************	
-    if(is_tool_launcher_enabled())
-        ret = open_backing_file(fsg, fsg->curlun, "/etc/verizon_i500.iso");
-#endif
-    printk("open_backing_file returned %d.\n", ret);
-#endif
-	return 36+20;
 }
 
 #ifdef FEATURE_DEVICE_AS_CDROM_DEVICE_FOR_DRIVER
